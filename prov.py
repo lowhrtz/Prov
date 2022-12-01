@@ -1066,7 +1066,7 @@ def check_brand_urls(environ):
                         ast_dn.close()
                         print(e)
                         return AppResponse('{}<div class="header">Problem with MySQL/MariaDB database.</div>'.format(get_def_head()), STATUS['ISE'])
-                templatefile = m2_dict.get('templatefile')
+                templatefile = m2_dict.get('templatefile', '')
                 fmt = m2_dict.get('format')
                 #print(templatefile)
                 #print(fmt)
