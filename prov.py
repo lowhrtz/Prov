@@ -46,6 +46,7 @@ STATUS = {
 
 HEADER = {
     'html': ('Content-type', 'text/html'),
+    "css": ("Content-type", "text/css"),
     'xml': ('Content-type', 'text/xml'),
     'js': ('Content-type', 'text/javascript'),
     'json': ('Content-type', 'application/json'),
