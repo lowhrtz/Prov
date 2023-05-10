@@ -21,6 +21,7 @@ from hashlib import pbkdf2_hmac
 from beaker.middleware import SessionMiddleware
 if sys.version_info.major == 2:
     VERSION_MAJOR = 2
+    FileNotFoundError = IOError
     import MySQLdb as mysql
     from urlparse import parse_qs
 elif sys.version_info.major == 3:
@@ -246,6 +247,8 @@ def submit_setup(environ):
         return AppResponse('', STATUS['Redirect'], [ ('Location', base_path) ])
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         db.execute('SELECT * FROM settings')
         db.close()
         return AppResponse('<div class="header">Database alread set up!</div>', STATUS['Forbidden'])
@@ -275,7 +278,7 @@ def submit_setup(environ):
             script = sql_file.read()
             sql_file.close()
         db.executescript(script)
-        db.execute('INSERT INTO settings VALUES (?, ?, ?, ?, ?, ?, ?, "")', (phone_server, mysql_host, mysql_user, mysql_pass, mysql_db, static_folder, ntp_server))
+        db.execute('INSERT INTO settings VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (phone_server, mysql_host, mysql_user, mysql_pass, mysql_db, static_folder, ntp_server, ""))
         db.execute('INSERT INTO users VALUES (?, ?, ?)', (user, hash_pw(pw1), 0))
         db.commit()
         db.close()
@@ -296,6 +299,8 @@ def get_index(environ):
 
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         db.execute('SELECT * FROM settings')
         db.close()
     except IOError:
@@ -462,6 +467,8 @@ def get_admin(environ):
         pwd = post_input.get('pwd', [''])[0]
         try:
             db = sqlite3.connect(SQLITE_DB)
+            if VERSION_MAJOR == 2:
+                db.text_factory = str
             c = db.execute('SELECT password FROM users WHERE username=?', (user, ))
             password = c.fetchone()
             if password is None or not compare_hash(pwd, password[0]):
@@ -487,6 +494,8 @@ def get_admin(environ):
 
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         db.execute('SELECT * FROM settings')
     except IOError as e:
         print(e)
@@ -521,6 +530,8 @@ def get_global_settings(environ):
 
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         toast = ''
         if request_method == 'POST':
             raw_post = environ.get('wsgi.input', '')
@@ -638,6 +649,8 @@ def model_global_settings(model, post=None):
     message = ''
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         c = db.execute('SELECT model_misc FROM settings')
         model_misc = c.fetchone()[0]
         try:
@@ -674,6 +687,8 @@ def get_phone_list(environ):
 
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         if request_method == 'POST':
             #print('POST')
             raw_post = environ.get('wsgi.input', '')
@@ -751,6 +766,8 @@ def edit_phone(environ):
     toast = ''
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         ex = post_input.get('ext', [])
         ma = post_input.get('mac', [])
         model = post_input.get('model', [''])
@@ -894,6 +911,8 @@ def get_account(environ):
             new_pw2 = post_input.get('new_pw2', [''])[0]
             try:
                 db = sqlite3.connect(SQLITE_DB)
+                if VERSION_MAJOR == 2:
+                    db.text_factory = str
                 c = db.execute('SELECT * FROM users WHERE username=?', (user, ))
                 r = c.fetchone()
                 pw = r[1]
@@ -983,6 +1002,8 @@ def check_brand_urls(environ):
                 mac = m_dict.get('mac', '')
                 try:
                     db = sqlite3.connect(SQLITE_DB)
+                    if VERSION_MAJOR == 2:
+                        db.text_factory = str
                     s = db.execute('SELECT * FROM settings')
                     settings = s.fetchone()
                 except IOError:
@@ -1085,6 +1106,8 @@ def check_static_content(environ):
     filename = environ.get('PATH_INFO', '').strip('/')
     try:
         db = sqlite3.connect(SQLITE_DB)
+        if VERSION_MAJOR == 2:
+            db.text_factory = str
         c = db.execute('SELECT static_folder FROM settings')
         static_folder = c.fetchone()[0]
         path = os.path.join(static_folder, filename)
