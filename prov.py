@@ -272,7 +272,7 @@ def submit_setup(environ):
         if pw1 != pw2 or not user or not pw1 or not phone_server or not mysql_host or not mysql_user or not mysql_pass or not mysql_db:
             message = 'Problem Getting Submitted Data!'
             return AppResponse(return_string.format(get_def_head(), message, base_path), STATUS['Forbidden'])
-        mysql_pass = hash_pw(mysql_pass)
+        mysql_pass = mysql_pass
         ntp_server = phone_server
         with open(os.path.join(os.path.dirname(__file__), 'db.sql')) as sql_file:
             script = sql_file.read()
