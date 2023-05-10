@@ -1192,6 +1192,9 @@ def application(environ, start_response):
     if VERSION_MAJOR == 3 and isinstance(html, str):
         html = bytes(html, 'utf-8')
 
+    if VERSION_MAJOR == 2 and isinstance(html, unicode):
+        html = str(html)
+
     start_response(response.get_status(), response.get_header())
 
     return [html]
