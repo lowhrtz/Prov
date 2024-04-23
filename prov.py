@@ -50,6 +50,7 @@ HEADER = {
     "css": ("Content-type", "text/css"),
     'xml': ('Content-type', 'text/xml'),
     'js': ('Content-type', 'text/javascript'),
+    'plain': ('Content-type', 'text/plain'),
     'json': ('Content-type', 'application/json'),
     'jpeg': ('Content-type', 'image/jpeg'),
     'gif': ('Content-type', 'image/gif'),
