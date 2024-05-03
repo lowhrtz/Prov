@@ -19,6 +19,7 @@ import sqlite3
 import sys
 from hashlib import pbkdf2_hmac
 from beaker.middleware import SessionMiddleware
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 if sys.version_info.major == 2:
     VERSION_MAJOR = 2
     FileNotFoundError = IOError
@@ -35,6 +36,7 @@ else:
 APP_TITLE = 'Phone Provisioner'
 SQLITE_DB = os.path.join(os.path.dirname(__file__), 'prov.db')
 TEMPLATES_FOLDER = os.path.join(os.path.dirname(__file__), 'templates')
+TEMPLATE_ENV = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER))
 SALT_LEN = 32
 
 STATUS = {
@@ -630,13 +632,10 @@ def get_model_globals(environ):
             'post_input': post_input,
             'settings': model_global_settings(model, post_input)
     }
-    model_global_fn = os.path.join(TEMPLATES_FOLDER, model, 'global-settings.template')
+    model_global_path = os.path.join(model, 'global-settings.template')
     try:
-        with open(model_global_fn, 'r') as model_global_f:
-            t = model_global_f.read()
-            from jinja2 import Template
-            t = Template(t).render(**model_context)
-    except FileNotFoundError:
+        t = TEMPLATE_ENV.get_template(model_global_path).render(**model_context)
+    except TemplateNotFound:
         return AppResponse('global-settings.template file not found for {}!'.format(model))
     form_html = '''\
 <form onsubmit="ajax_request('{}/model-globals', serialize(this)); return false;">
@@ -825,13 +824,11 @@ def edit_phone(environ):
                 'template': template,
                 'misc': misc_dict[template] if template in misc_dict else {},
         }
+        edit_phone_path = os.path.join(template, 'edit-phone.template')
         try:
-            with open(os.path.join(TEMPLATES_FOLDER, template, 'edit-phone.template'), 'r') as t_file:
-                t = t_file.read()
-                from jinja2 import Template
-                t = Template(t).render(**context)
-        except FileNotFoundError:
-            t = 'Couldnt find the edit-phone.template file!'
+            t = TEMPLATE_ENV.get_template(edit_phone_path).render(**context)
+        except TemplateNotFound:
+            t = 'Couldnt find the edit-phone.template file for {}!'.format(template)
 
         template_html = '''\
 <button type="button" onclick="ajax_request('{}/edit-phone', 'clear_template=true&rowid={}')">Change Model</button><br />
@@ -1093,14 +1090,11 @@ def check_brand_urls(environ):
                 fmt = m2_dict.get('format')
                 #print(templatefile)
                 #print(fmt)
-                fn = os.path.join(TEMPLATES_FOLDER, brand, model, templatefile)
+                template_path = os.path.join(brand, model, templatefile)
                 try:
-                    with open(fn, 'r') as t_file:
-                        t = t_file.read()
-                except FileNotFoundError:
-                    return AppResponse('{}<div class="header">Template File Missing!</div>'.format(get_def_head()), STATUS['Not Found'])
-                from jinja2 import Template
-                t = Template(t).render(**context)
+                    t = TEMPLATE_ENV.get_template(template_path).render(**context)
+                except TemplateNotFound as e:
+                    return AppResponse('{}<div class="header">Template File Missing!</div>{}'.format(get_def_head(), e), STATUS['Not Found'])
                 return AppResponse(t, STATUS['OK'], [ HEADER[fmt] if fmt in HEADER else HEADER['html'] ])
 
 def check_static_content(environ):
